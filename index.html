@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#16213e">
+  <meta name="format-detection" content="telephone=no">
+  <title>消消乐</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      height: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      background-attachment: fixed;
+      color: #eee;
+      padding:
+        max(8px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        max(10px, env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: none;
+      touch-action: pan-y;
+    }
+
+    .board-wrap,
+    #board {
+      touch-action: none;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 0;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.25rem, 5vw, 2rem);
+      background: linear-gradient(90deg, #ff6b9d, #c44dff, #4ecdc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+
+    .info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px 20px;
+      margin-bottom: 8px;
+      font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+      width: 100%;
+    }
+
+    .info span { color: #4ecdc4; font-weight: bold; }
+
+    .level-panel {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px 12px;
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.28);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .level-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .level-tag {
+      font-size: 0.85rem;
+      padding: 2px 10px;
+      border-radius: 10px;
+      background: rgba(78, 205, 196, 0.25);
+      color: #4ecdc4;
+    }
+
+    .level-tag.hard { background: rgba(255, 107, 157, 0.25); color: #ff6b9d; }
+    .level-tag.expert { background: rgba(196, 77, 255, 0.3); color: #e0b0ff; }
+
+    .progress-wrap {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4ecdc4, #44a08d);
+      border-radius: 5px;
+      transition: width 0.35s ease;
+    }
+
+    .progress-bar.done {
+      background: linear-gradient(90deg, #ff6b9d, #c44dff);
+    }
+
+    .goal-text {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: #8899aa;
+    }
+
+    .goal-text span { color: #f1c40f; font-weight: bold; }
+
+    .mechanic-banner {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      background: rgba(78, 205, 196, 0.12);
+      border: 1px solid rgba(78, 205, 196, 0.25);
+      color: #b8e8e3;
+    }
+
+    .mechanic-banner strong { color: #4ecdc4; }
+
+    .mechanic-banner.phase-1 { background: rgba(100, 180, 255, 0.12); border-color: rgba(100, 180, 255, 0.3); }
+    .mechanic-banner.phase-1 strong { color: #7ec8ff; }
+
+    .mechanic-banner.phase-2 { background: rgba(180, 140, 100, 0.15); border-color: rgba(180, 140, 100, 0.35); }
+    .mechanic-banner.phase-2 strong { color: #d4a574; }
+
+    .mechanic-banner.phase-3 { background: rgba(196, 77, 255, 0.12); border-color: rgba(196, 77, 255, 0.3); }
+    .mechanic-banner.phase-3 strong { color: #d8a8ff; }
+
+    .mechanic-banner.phase-4 { background: rgba(255, 200, 80, 0.12); border-color: rgba(255, 200, 80, 0.35); }
+    .mechanic-banner.phase-4 strong { color: #ffd56b; }
+
+    .board-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 0;
+      margin: 4px 0;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      width: min(calc(100vw - 20px), calc(100dvh - 240px), 400px);
+      height: min(calc(100vw - 20px), calc(100dvh - 240px), 400px);
+      max-width: 100%;
+      gap: clamp(2px, 0.65vw, 4px);
+      padding: clamp(6px, 1.5vw, 12px);
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: clamp(10px, 2.5vw, 16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .cell {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      border-radius: clamp(6px, 1.4vw, 12px);
+      cursor: grab;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(17px, 4.8vw, 28px);
+      -webkit-user-select: none;
+      user-select: none;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .cell:hover:not(.empty):not(.stone) { transform: scale(1.06); }
+    }
+
+    .cell.dragging {
+      cursor: grabbing;
+      transform: scale(1.08);
+      z-index: 2;
+    }
+
+    .cell.selected {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 3px #fff, 0 0 16px rgba(255, 255, 255, 0.6);
+      z-index: 1;
+    }
+
+    .cell.matching {
+      animation: pop 0.35s ease forwards;
+    }
+
+    .cell.stone {
+      cursor: not-allowed;
+      background: linear-gradient(145deg, #5a6268, #3d4449) !important;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+      font-size: clamp(14px, 4vw, 24px);
+    }
+
+    .cell .fruit-inner {
+      position: relative;
+      z-index: 1;
+      line-height: 1;
+    }
+
+    .cell.ice .fruit-inner {
+      filter: blur(2px) saturate(0.5);
+      opacity: 0.35;
+    }
+
+    .cell .ice-cover {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      border-radius: inherit;
+      background: linear-gradient(
+        145deg,
+        rgba(220, 245, 255, 0.92) 0%,
+        rgba(120, 200, 255, 0.78) 45%,
+        rgba(80, 160, 230, 0.85) 100%
+      );
+      border: 2px solid rgba(255, 255, 255, 0.75);
+      box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(14px, 4.5vw, 26px);
+      pointer-events: none;
+    }
+
+    .cell .special-badge {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      border-radius: inherit;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(12px, 3.8vw, 22px);
+    }
+
+    .cell.sp-lineH .special-badge {
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.5) 0px,
+        rgba(255, 255, 255, 0.5) 4px,
+        transparent 4px,
+        transparent 10px
+      );
+    }
+
+    .cell.sp-lineV .special-badge {
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.5) 0px,
+        rgba(255, 255, 255, 0.5) 4px,
+        transparent 4px,
+        transparent 10px
+      );
+    }
+
+    .cell.sp-bomb .special-badge {
+      background: radial-gradient(circle, rgba(255, 120, 60, 0.55), transparent 70%);
+    }
+
+    .cell.sp-durian .special-badge {
+      background: radial-gradient(circle, rgba(255, 220, 80, 0.65), transparent 75%);
+      font-size: clamp(14px, 4.5vw, 26px);
+    }
+
+    .cell.combo-flash {
+      animation: comboFlash 0.45s ease;
+    }
+
+    @keyframes comboFlash {
+      0%, 100% { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
+      50% { box-shadow: inset 0 0 20px 6px rgba(255, 255, 200, 0.9); }
+    }
+
+    .cell.locked::after {
+      content: "🔒";
+      position: absolute;
+      font-size: 16px;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .cell.locked { position: relative; opacity: 0.88; cursor: not-allowed; }
+
+    .bonus-hint {
+      font-size: clamp(0.72rem, 2.8vw, 0.85rem);
+      color: #8899aa;
+      margin-bottom: 6px;
+      text-align: center;
+      width: 100%;
+      line-height: 1.4;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .bonus-hint span { color: #ffd56b; }
+
+    @keyframes pop {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.8; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    .cell.falling {
+      transition: transform 0.25s ease-out;
+    }
+
+    .hint {
+      margin-top: 6px;
+      font-size: clamp(0.68rem, 2.6vw, 0.85rem);
+      color: #8899aa;
+      text-align: center;
+      line-height: 1.45;
+      padding: 0 6px 8px;
+      flex-shrink: 0;
+    }
+
+    .footer-actions {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 4px;
+      flex-shrink: 0;
+    }
+
+    button {
+      margin-top: 0;
+      padding: 12px 32px;
+      min-height: 44px;
+      font-size: clamp(0.9rem, 3.5vw, 1rem);
+      border: none;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #ff6b9d, #c44dff);
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.15s, box-shadow 0.15s;
+      touch-action: manipulation;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(196, 77, 255, 0.4);
+      }
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .toast {
+      position: fixed;
+      top: max(12px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: rgba(78, 205, 196, 0.95);
+      color: #1a1a2e;
+      padding: 10px 18px;
+      border-radius: 24px;
+      font-weight: bold;
+      font-size: clamp(0.8rem, 3.2vw, 0.95rem);
+      max-width: calc(100vw - 32px);
+      text-align: center;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .audio-controls {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+
+    .music-btn {
+      position: static;
+      margin-top: 0;
+      padding: 8px 12px;
+      min-height: 36px;
+      font-size: clamp(0.68rem, 2.6vw, 0.82rem);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .music-btn.on {
+      background: linear-gradient(135deg, #4ecdc4, #44a08d);
+      border-color: transparent;
+    }
+
+    .music-btn.sfx-btn.on {
+      background: linear-gradient(135deg, #ff6b9d, #c44dff);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .music-btn:hover { box-shadow: 0 4px 16px rgba(78, 205, 196, 0.35); }
+      .music-btn.sfx-btn:hover { box-shadow: 0 4px 16px rgba(196, 77, 255, 0.35); }
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 12, 30, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: linear-gradient(160deg, #1e2a4a, #16213e);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      width: min(340px, calc(100vw - 40px));
+      max-height: calc(100dvh - 80px);
+      overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #4ecdc4;
+    }
+
+    .modal.fail h2 { color: #ff6b9d; }
+
+    .modal p {
+      color: #aab;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions button { margin-top: 0; }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .btn-secondary:hover { box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15); }
+    }
+
+    @media (max-width: 380px) {
+      .music-btn .btn-long { display: none; }
+      .music-btn .btn-short { display: inline; }
+      .goal-text { font-size: 0.78rem; }
+      .mechanic-banner { font-size: 0.75rem; }
+    }
+
+    @media (min-width: 381px) {
+      .music-btn .btn-short { display: none; }
+      .music-btn .btn-long { display: inline; }
+    }
+
+    @media (max-height: 640px) {
+      #board {
+        width: min(calc(100vw - 16px), calc(100dvh - 200px));
+        height: min(calc(100vw - 16px), calc(100dvh - 200px));
+      }
+      .level-panel { padding: 8px 10px; margin-bottom: 6px; }
+      .mechanic-banner { display: none; }
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+  <header class="top-bar">
+    <h1>消消乐</h1>
+    <div class="audio-controls">
+      <button type="button" id="musicToggle" class="music-btn" aria-pressed="false">
+        <span class="btn-long">🔇 背景音乐：关</span><span class="btn-short">🔇 音乐</span>
+      </button>
+      <button type="button" id="sfxToggle" class="music-btn sfx-btn on" aria-pressed="true">
+        <span class="btn-long">🔔 消除音效：开</span><span class="btn-short">🔔 音效</span>
+      </button>
+    </div>
+  </header>
+  <div class="level-panel">
+    <div class="level-head">
+      <div>第 <span id="levelNum">1</span> 关</div>
+      <span id="levelTag" class="level-tag">简单</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p class="goal-text">目标 <span id="target">500</span> 分 · 已得 <span id="scoreGoal">0</span> 分 · <span id="typesHint">4</span> 种方块</p>
+    <div class="mechanic-banner" id="mechanicBanner"><strong>经典模式</strong> · 单次消除达阈值可奖励步数</div>
+  </div>
+  <div class="info">
+    <div>得分：<span id="score">0</span></div>
+    <div>连击：<span id="combo">0</span></div>
+    <div>剩余步数：<span id="moves">30</span></div>
+  </div>
+  <p class="bonus-hint">单次消除 ≥ <span id="bonusThreshold">80</span> 分可奖励 +1～+3 步</p>
+  <div class="board-wrap">
+    <div id="board"></div>
+  </div>
+  <p class="hint">滑动相邻方块交换 · 4 连直线 · 5 连 L/T 爆炸 · 特效组合横扫</p>
+  <div class="footer-actions">
+    <button id="restart">重试本关</button>
+  </div>
+  </main>
+  <div class="toast" id="toast"></div>
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modal">
+      <h2 id="modalTitle">过关！</h2>
+      <p id="modalMsg"></p>
+      <div class="modal-actions">
+        <button id="modalPrimary">下一关</button>
+        <button id="modalSecondary" class="btn-secondary">重试</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SIZE = 8;
+    const ICONS = ["🍎", "🍊", "🍇", "🍋", "🍉", "🍒"];
+    const COLORS = [
+      "#e74c3c", "#e67e22", "#9b59b6",
+      "#f1c40f", "#2ecc71", "#e91e63"
+    ];
+    const LEVEL_STORAGE_KEY = "xxl-level";
+    const STONE = -2;
+
+    const PHASES = [
+      { id: "classic", name: "经典模式", tip: "4 连直线特效 · 5 连 L/T 爆炸 · 五连直线榴莲 · 特效可组合", icon: "✨" },
+      { id: "ice", name: "冰霜障碍", tip: "🧊 冰块包裹方块无法参与消除，需相邻消除破解", icon: "🧊" },
+      { id: "stone", name: "巨石封路", tip: "🪨 石块不可交换，相邻消除可将其击碎", icon: "🪨" },
+      { id: "lock", name: "枷锁禁锢", tip: "🔒 枷锁方块不可拖动，相邻消除可解锁", icon: "🔒" },
+      { id: "blitz", name: "疾风连击", tip: "⚡ 连击得分提升；大额消除奖励更多步数", icon: "⚡" }
+    ];
+
+    let grid = [];
+    let cellMeta = [];
+    let cellSpecial = [];
+    let lastSwap = null;
+    let score = 0;
+    let combo = 0;
+    let movesLeft = 30;
+    let dragStart = null;
+    let dragLocked = false;
+    let busy = false;
+    function getDragThreshold() {
+      const w = window.innerWidth;
+      if (window.matchMedia("(pointer: coarse)").matches || w <= 768) {
+        return Math.max(14, Math.min(22, Math.round(w * 0.048)));
+      }
+      return 28;
+    }
+
+    let gameOver = false;
+    let currentLevel = 1;
+    let levelConfig = null;
+    let typesCount = 4;
+    let lastAnnouncedPhase = -1;
+
+    const boardEl = document.getElementById("board");
+    const scoreEl = document.getElementById("score");
+    const comboEl = document.getElementById("combo");
+    const movesEl = document.getElementById("moves");
+    const toastEl = document.getElementById("toast");
+    const musicToggleEl = document.getElementById("musicToggle");
+    const sfxToggleEl = document.getElementById("sfxToggle");
+    const levelNumEl = document.getElementById("levelNum");
+    const levelTagEl = document.getElementById("levelTag");
+    const targetEl = document.getElementById("target");
+    const scoreGoalEl = document.getElementById("scoreGoal");
+    const typesHintEl = document.getElementById("typesHint");
+    const progressBarEl = document.getElementById("progressBar");
+    const overlayEl = document.getElementById("overlay");
+    const modalEl = document.getElementById("modal");
+    const modalTitleEl = document.getElementById("modalTitle");
+    const modalMsgEl = document.getElementById("modalMsg");
+    const modalPrimaryEl = document.getElementById("modalPrimary");
+    const modalSecondaryEl = document.getElementById("modalSecondary");
+    const mechanicBannerEl = document.getElementById("mechanicBanner");
+    const bonusThresholdEl = document.getElementById("bonusThreshold");
+
+    function getPhase(level) {
+      return Math.min(PHASES.length - 1, Math.floor((level - 1) / 10));
+    }
+
+    function getLevelConfig(level) {
+      const lv = Math.max(1, level);
+      const phase = getPhase(lv);
+      const phaseLevel = ((lv - 1) % 10) + 1;
+      const types = Math.min(6, 4 + Math.floor((lv - 1) / 2));
+      const moves = Math.max(12, Math.round(34 - (lv - 1) * 1.6));
+      const target = Math.round(280 + lv * 130 + Math.pow(lv, 1.35) * 40);
+      const bonusThreshold = Math.round(55 + lv * 5 + phase * 8);
+      let tag = "简单";
+      let tagClass = "";
+      if (lv >= 10) { tag = "专家"; tagClass = "expert"; }
+      else if (lv >= 7) { tag = "困难"; tagClass = "hard"; }
+      else if (lv >= 4) { tag = "普通"; tagClass = ""; }
+      return {
+        level: lv,
+        phase,
+        phaseLevel,
+        types,
+        moves,
+        target,
+        tag,
+        tagClass,
+        mechanic: PHASES[phase],
+        bonusThreshold,
+        comboMultiplier: phase >= 4 ? 1.45 : 1,
+        iceCount: phase >= 1 ? Math.min(14, 3 + phaseLevel * 2) : 0,
+        stoneCount: phase >= 2 ? Math.min(10, 2 + Math.floor(phaseLevel * 0.9)) : 0,
+        lockCount: phase >= 3 ? Math.min(12, 2 + phaseLevel) : 0
+      };
+    }
+
+    function saveProgress(level) {
+      const saved = parseInt(localStorage.getItem(LEVEL_STORAGE_KEY) || "1", 10);
+      if (level > saved) localStorage.setItem(LEVEL_STORAGE_KEY, String(level));
+    }
+
+    function loadSavedLevel() {
+      return Math.max(1, parseInt(localStorage.getItem(LEVEL_STORAGE_KEY) || "1", 10));
+    }
+
+    const Bgm = (() => {
+      const NOTES = {
+        G3: 196.0, A3: 220.0, F3: 174.61,
+        C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.0, A4: 440.0, B4: 493.88,
+        C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.0,
+        B5: 987.77, C6: 1046.5
+      };
+      const MELODY = [
+        ["C5", 0.18], ["E5", 0.18], ["G5", 0.18], ["A5", 0.24],
+        ["G5", 0.18], ["E5", 0.18], ["C5", 0.18], ["G4", 0.18],
+        ["D5", 0.18], ["F5", 0.18], ["A5", 0.18], ["C6", 0.24],
+        ["A5", 0.18], ["G5", 0.18], ["E5", 0.18], ["D5", 0.18],
+        ["F5", 0.18], ["A5", 0.18], ["G5", 0.18], ["E5", 0.24],
+        ["G5", 0.18], ["E5", 0.18], ["D5", 0.18], ["C5", 0.18],
+        ["G4", 0.18], ["B4", 0.18], ["D5", 0.18], ["G5", 0.24],
+        ["E5", 0.18], ["G5", 0.18], ["A5", 0.18], ["G5", 0.18],
+        ["E5", 0.18], ["C5", 0.18], ["G4", 0.18], ["C5", 0.28]
+      ];
+      const BASS = [
+        "C4", "G3", "A3", "F3", "G3", "C4", "F3", "G3",
+        "C4", "G3", "A3", "F3", "G3", "C4", "F3", "G3"
+      ];
+      const BEAT_MS = 220;
+      const STORAGE_KEY = "xxl-bgm-enabled";
+
+      let ctx = null;
+      let master = null;
+      let softFilter = null;
+      let padOscs = [];
+      let timer = null;
+      let step = 0;
+      let enabled = localStorage.getItem(STORAGE_KEY) === "1";
+
+      function playTone(freq, duration, type, peak) {
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(peak, t + 0.035);
+        gain.gain.setValueAtTime(peak * 0.7, t + duration * 0.55);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + duration + 0.06);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(t);
+        osc.stop(t + duration + 0.1);
+      }
+
+      function playNote(freq, duration, role) {
+        if (role === "lead") {
+          playTone(freq, duration, "sine", 0.038);
+          playTone(freq * 1.5, duration * 0.75, "triangle", 0.012);
+        } else {
+          playTone(freq, duration, "sine", 0.028);
+        }
+      }
+
+      function startPad() {
+        [NOTES.C4, NOTES.E4, NOTES.G4].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const lfo = ctx.createOscillator();
+          const lfoGain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          lfo.frequency.value = 0.8 + i * 0.15;
+          lfoGain.gain.value = 1.2;
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+          gain.gain.value = 0.008;
+          osc.connect(gain);
+          gain.connect(master);
+          lfo.start();
+          osc.start();
+          padOscs.push({ osc, gain, lfo });
+        });
+      }
+
+      function stopPad() {
+        const end = ctx.currentTime + 0.25;
+        padOscs.forEach(({ osc, gain, lfo }) => {
+          gain.gain.exponentialRampToValueAtTime(0.001, end);
+          lfo.stop(end);
+          osc.stop(end + 0.05);
+        });
+        padOscs = [];
+      }
+
+      function tick() {
+        const [name, dur] = MELODY[step % MELODY.length];
+        playNote(NOTES[name], dur, "lead");
+        if (step % 4 === 0) {
+          const bassName = BASS[(step / 4) % BASS.length];
+          playNote(NOTES[bassName], dur * 1.3, "bass");
+        }
+        step++;
+      }
+
+      async function ensureCtx() {
+        if (!ctx) {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          master = ctx.createGain();
+          master.gain.value = 0.2;
+          softFilter = ctx.createBiquadFilter();
+          softFilter.type = "lowpass";
+          softFilter.frequency.value = 1600;
+          softFilter.Q.value = 0.5;
+          master.connect(softFilter);
+          softFilter.connect(ctx.destination);
+        }
+        if (ctx.state === "suspended") await ctx.resume();
+      }
+
+      async function start() {
+        await ensureCtx();
+        if (timer) return;
+        startPad();
+        tick();
+        timer = setInterval(tick, BEAT_MS);
+      }
+
+      function stop() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+        if (ctx && padOscs.length) stopPad();
+        step = 0;
+      }
+
+      function isEnabled() {
+        return enabled;
+      }
+
+      async function setEnabled(on) {
+        enabled = on;
+        localStorage.setItem(STORAGE_KEY, on ? "1" : "0");
+        updateToggleUI();
+        if (on) await start();
+        else stop();
+      }
+
+      function updateToggleUI() {
+        musicToggleEl.classList.toggle("on", enabled);
+        musicToggleEl.setAttribute("aria-pressed", enabled ? "true" : "false");
+        musicToggleEl.innerHTML = enabled
+          ? '<span class="btn-long">🔊 背景音乐：开</span><span class="btn-short">🔊 音乐</span>'
+          : '<span class="btn-long">🔇 背景音乐：关</span><span class="btn-short">🔇 音乐</span>';
+      }
+
+      updateToggleUI();
+      return { isEnabled, setEnabled, start, stop, ensureCtx, getCtx: () => ctx };
+    })();
+
+    const Sfx = (() => {
+      const STORAGE_KEY = "xxl-sfx-enabled";
+      let enabled = localStorage.getItem(STORAGE_KEY) !== "0";
+
+      function playMatch(matchCount, comboLevel) {
+        if (!enabled) return;
+        Bgm.ensureCtx().then(() => {
+          const ctx = Bgm.getCtx();
+          if (!ctx) return;
+
+          const t = ctx.currentTime;
+          const out = ctx.createGain();
+          const vol = Math.min(0.45, 0.22 + matchCount * 0.025);
+          out.gain.value = vol;
+          out.connect(ctx.destination);
+
+          const base = 300 + comboLevel * 70 + Math.min(matchCount * 6, 72);
+
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(base, t);
+          osc.frequency.exponentialRampToValueAtTime(base * 2.2, t + 0.07);
+          g.gain.setValueAtTime(0.001, t);
+          g.gain.linearRampToValueAtTime(0.28, t + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+          osc.connect(g);
+          g.connect(out);
+          osc.start(t);
+          osc.stop(t + 0.13);
+
+          const bufLen = Math.floor(ctx.sampleRate * 0.045);
+          const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+          const ch = buf.getChannelData(0);
+          for (let i = 0; i < bufLen; i++) {
+            ch[i] = (Math.random() * 2 - 1) * (1 - i / bufLen);
+          }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buf;
+          const hp = ctx.createBiquadFilter();
+          hp.type = "highpass";
+          hp.frequency.value = 1400;
+          const ng = ctx.createGain();
+          ng.gain.setValueAtTime(0.1, t);
+          ng.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+          noise.connect(hp);
+          hp.connect(ng);
+          ng.connect(out);
+          noise.start(t);
+          noise.stop(t + 0.06);
+
+          if (comboLevel >= 2) {
+            const o2 = ctx.createOscillator();
+            const g2 = ctx.createGain();
+            o2.type = "triangle";
+            o2.frequency.setValueAtTime(base * 2.8, t + 0.04);
+            o2.frequency.exponentialRampToValueAtTime(base * 3.6, t + 0.1);
+            g2.gain.setValueAtTime(0.001, t + 0.04);
+            g2.gain.linearRampToValueAtTime(0.14, t + 0.055);
+            g2.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+            o2.connect(g2);
+            g2.connect(out);
+            o2.start(t + 0.04);
+            o2.stop(t + 0.18);
+          }
+        });
+      }
+
+      function updateToggleUI() {
+        sfxToggleEl.classList.toggle("on", enabled);
+        sfxToggleEl.setAttribute("aria-pressed", enabled ? "true" : "false");
+        sfxToggleEl.innerHTML = enabled
+          ? '<span class="btn-long">🔔 消除音效：开</span><span class="btn-short">🔔 音效</span>'
+          : '<span class="btn-long">🔕 消除音效：关</span><span class="btn-short">🔕 音效</span>';
+      }
+
+      function setEnabled(on) {
+        enabled = on;
+        localStorage.setItem(STORAGE_KEY, on ? "1" : "0");
+        updateToggleUI();
+      }
+
+      function isEnabled() {
+        return enabled;
+      }
+
+      updateToggleUI();
+      return { isEnabled, setEnabled, playMatch };
+    })();
+
+    musicToggleEl.addEventListener("click", () => {
+      Bgm.setEnabled(!Bgm.isEnabled());
+    });
+
+    sfxToggleEl.addEventListener("click", () => {
+      Sfx.setEnabled(!Sfx.isEnabled());
+    });
+
+    function randType() {
+      return Math.floor(Math.random() * typesCount);
+    }
+
+    function initCellMeta() {
+      cellMeta = [];
+      cellSpecial = [];
+      for (let r = 0; r < SIZE; r++) {
+        cellMeta[r] = [];
+        cellSpecial[r] = [];
+        for (let c = 0; c < SIZE; c++) {
+          cellMeta[r][c] = null;
+          cellSpecial[r][c] = null;
+        }
+      }
+    }
+
+    function swapAll(r1, c1, r2, c2) {
+      swap(r1, c1, r2, c2);
+      const tm = cellMeta[r1][c1], tm2 = cellMeta[r2][c2];
+      cellMeta[r1][c1] = tm2;
+      cellMeta[r2][c2] = tm;
+      const ts = cellSpecial[r1][c1], ts2 = cellSpecial[r2][c2];
+      cellSpecial[r1][c1] = ts2;
+      cellSpecial[r2][c2] = ts;
+    }
+
+    function setSpecial(r, c, type) {
+      cellSpecial[r][c] = type;
+    }
+
+    function clearCell(r, c) {
+      grid[r][c] = -1;
+      cellMeta[r][c] = null;
+      cellSpecial[r][c] = null;
+    }
+
+    function getSpecialCells(r, c, sp) {
+      const keys = new Set();
+      if (sp === "lineH") {
+        for (let cc = 0; cc < SIZE; cc++) if (isPlayable(r, cc)) keys.add(`${r},${cc}`);
+      } else if (sp === "lineV") {
+        for (let rr = 0; rr < SIZE; rr++) if (isPlayable(rr, c)) keys.add(`${rr},${c}`);
+      } else if (sp === "bomb") {
+        for (let rr = r - 2; rr <= r + 2; rr++) {
+          for (let cc = c - 2; cc <= c + 2; cc++) {
+            if (inBounds(rr, cc) && isPlayable(rr, cc)) keys.add(`${rr},${cc}`);
+          }
+        }
+      } else if (sp === "durian") {
+        const color = grid[r][c];
+        for (let rr = 0; rr < SIZE; rr++) {
+          for (let cc = 0; cc < SIZE; cc++) {
+            if (isPlayable(rr, cc) && grid[rr][cc] === color) keys.add(`${rr},${cc}`);
+          }
+        }
+      }
+      return keys;
+    }
+
+    function addClearScore(count) {
+      if (count <= 0) return;
+      combo++;
+      const levelBonus = 1 + (levelConfig.level - 1) * 0.05;
+      const points = Math.round(count * 12 * combo * levelBonus * levelConfig.comboMultiplier);
+      score += points;
+      grantBonusMoves(points);
+      Sfx.playMatch(Math.min(count, 8), combo);
+      updateUI();
+      return points;
+    }
+
+    async function blastCells(keys, flashMsg) {
+      if (keys.size === 0) return;
+      if (flashMsg) showToast(flashMsg);
+      resolveObstaclesFromMatch(keys);
+      render(keys);
+      await sleep(320);
+      addClearScore(keys.size);
+      if (checkLevelEnd()) return true;
+      keys.forEach((key) => {
+        const [r, c] = key.split(",").map(Number);
+        clearCell(r, c);
+      });
+      applyGravity();
+      render();
+      await sleep(200);
+      return false;
+    }
+
+    async function activateSpecialAt(r, c, sp) {
+      if (!sp || !inBounds(r, c) || !isPlayable(r, c)) return false;
+      const keys = getSpecialCells(r, c, sp);
+      keys.add(`${r},${c}`);
+      const labels = { lineH: "↔ 直线清除！", lineV: "↕ 直线清除！", bomb: "💥 范围爆炸！", durian: "🥭 同色清除！" };
+      return blastCells(keys, labels[sp]);
+    }
+
+    async function activateCombo(sp1, sp2, r1, c1, r2, c2) {
+      const keys = new Set();
+      const isLine = (s) => s === "lineH" || s === "lineV";
+      const isBomb = (s) => s === "bomb";
+      const isDurian = (s) => s === "durian";
+
+      if (isDurian(sp1) || isDurian(sp2)) {
+        if (isDurian(sp1) && isDurian(sp2)) {
+          for (let rr = 0; rr < SIZE; rr++) {
+            for (let cc = 0; cc < SIZE; cc++) {
+              if (isPlayable(rr, cc)) keys.add(`${rr},${cc}`);
+            }
+          }
+          await blastCells(keys, "🥭🥭 双榴莲合璧！全屏引爆");
+          return;
+        }
+        const partner = isDurian(sp1) ? sp2 : sp1;
+        const pr = isDurian(sp1) ? r2 : r1;
+        const pc = isDurian(sp1) ? c2 : c1;
+        const color = grid[pr][pc];
+        for (let rr = 0; rr < SIZE; rr++) {
+          for (let cc = 0; cc < SIZE; cc++) {
+            if (!isPlayable(rr, cc) || grid[rr][cc] !== color) continue;
+            if (partner === "lineH" || partner === "lineV") {
+              getSpecialCells(rr, cc, partner).forEach((k) => keys.add(k));
+            } else if (partner === "bomb") {
+              getSpecialCells(rr, cc, "bomb").forEach((k) => keys.add(k));
+            } else {
+              keys.add(`${rr},${cc}`);
+            }
+          }
+        }
+        await blastCells(keys, "🥭 榴莲魔力！同色化作特效并引爆");
+        return;
+      }
+
+      if (isBomb(sp1) && isBomb(sp2)) {
+        for (let rr = 0; rr < SIZE; rr++) {
+          for (let cc = 0; cc < SIZE; cc++) {
+            if (isPlayable(rr, cc)) keys.add(`${rr},${cc}`);
+          }
+        }
+        await blastCells(keys, "💥 双爆组合！全屏冲击");
+        return;
+      }
+
+      if (isLine(sp1) && isLine(sp2)) {
+        for (let rr = 0; rr < SIZE; rr++) {
+          for (let cc = 0; cc < SIZE; cc++) {
+            if (isPlayable(rr, cc)) keys.add(`${rr},${cc}`);
+          }
+        }
+        await blastCells(keys, "✨ 双线合璧！横扫棋盘");
+        return;
+      }
+
+      if ((isBomb(sp1) && isLine(sp2)) || (isBomb(sp2) && isLine(sp1))) {
+        getSpecialCells(r1, c1, "bomb").forEach((k) => keys.add(k));
+        getSpecialCells(r2, c2, "bomb").forEach((k) => keys.add(k));
+        getSpecialCells(r1, c1, sp1 === "lineH" || sp1 === "lineV" ? sp1 : sp2).forEach((k) => keys.add(k));
+        getSpecialCells(r2, c2, sp2 === "lineH" || sp2 === "lineV" ? sp2 : sp1).forEach((k) => keys.add(k));
+        await blastCells(keys, "🔥 爆破直线！大范围横扫");
+        return;
+      }
+
+      getSpecialCells(r1, c1, sp1).forEach((k) => keys.add(k));
+      getSpecialCells(r2, c2, sp2).forEach((k) => keys.add(k));
+      await blastCells(keys, "⚡ 特效组合");
+    }
+
+    function clusterMatchSet(matchSet) {
+      const clusters = [];
+      const visited = new Set();
+      const adj = (key) => {
+        const [r, c] = key.split(",").map(Number);
+        return getAdjacentKeys(r, c).filter((k) => matchSet.has(k));
+      };
+      matchSet.forEach((start) => {
+        if (visited.has(start)) return;
+        const cluster = new Set();
+        const q = [start];
+        visited.add(start);
+        while (q.length) {
+          const cur = q.pop();
+          cluster.add(cur);
+          adj(cur).forEach((n) => {
+            if (!visited.has(n)) {
+              visited.add(n);
+              q.push(n);
+            }
+          });
+        }
+        clusters.push(cluster);
+      });
+      return clusters;
+    }
+
+    function classifyCluster(cluster) {
+      const coords = [...cluster].map((k) => k.split(",").map(Number));
+      const rows = new Set(coords.map(([r]) => r));
+      const cols = new Set(coords.map(([, c]) => c));
+      const size = cluster.size;
+      if (size >= 5 && (rows.size > 1 && cols.size > 1)) return "LT5";
+      if (size === 4 && rows.size === 1) return "line4h";
+      if (size === 4 && cols.size === 1) return "line4v";
+      if (size >= 5 && rows.size === 1) return "line5h";
+      if (size >= 5 && cols.size === 1) return "line5v";
+      return "normal";
+    }
+
+    function pickSpawnCell(cluster) {
+      if (!lastSwap) {
+        const first = [...cluster][0].split(",").map(Number);
+        return { r: first[0], c: first[1] };
+      }
+      const keys = new Set(cluster);
+      if (keys.has(`${lastSwap.r1},${lastSwap.c1}`)) return { r: lastSwap.r1, c: lastSwap.c1 };
+      if (keys.has(`${lastSwap.r2},${lastSwap.c2}`)) return { r: lastSwap.r2, c: lastSwap.c2 };
+      const mid = [...cluster][Math.floor(cluster.size / 2)].split(",").map(Number);
+      return { r: mid[0], c: mid[1] };
+    }
+
+    function getSpawnsFromMatches(matchSet) {
+      const spawns = [];
+      const reserved = new Set();
+      clusterMatchSet(matchSet).forEach((cluster) => {
+        const shape = classifyCluster(cluster);
+        let sp = null;
+        if (shape === "LT5") sp = "bomb";
+        else if (shape === "line4h") sp = "lineH";
+        else if (shape === "line4v") sp = "lineV";
+        else if (shape === "line5h" || shape === "line5v") sp = "durian";
+        if (!sp) return;
+        const pivot = pickSpawnCell(cluster);
+        const key = `${pivot.r},${pivot.c}`;
+        if (reserved.has(key)) return;
+        reserved.add(key);
+        spawns.push({ r: pivot.r, c: pivot.c, sp, cluster });
+      });
+      return spawns;
+    }
+
+    function inBounds(r, c) {
+      return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+    }
+
+    function isPlayable(r, c) {
+      return grid[r][c] >= 0;
+    }
+
+    function canDrag(r, c) {
+      if (!isPlayable(r, c)) return false;
+      return cellMeta[r][c] !== "lock";
+    }
+
+    function matchTypeAt(r, c) {
+      if (!isPlayable(r, c) || cellMeta[r][c] === "ice") return -1;
+      return grid[r][c];
+    }
+
+    function randomEmptyCell() {
+      const list = [];
+      for (let r = 0; r < SIZE; r++)
+        for (let c = 0; c < SIZE; c++)
+          if (isPlayable(r, c)) list.push([r, c]);
+      if (!list.length) return null;
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function spawnObstacles() {
+      const place = (count, apply) => {
+        let n = 0, guard = 0;
+        while (n < count && guard < 200) {
+          guard++;
+          const pos = randomEmptyCell();
+          if (!pos) break;
+          const [r, c] = pos;
+          if (apply(r, c)) n++;
+        }
+      };
+      if (levelConfig.stoneCount > 0) {
+        place(levelConfig.stoneCount, (r, c) => {
+          if (grid[r][c] < 0) return false;
+          grid[r][c] = STONE;
+          cellMeta[r][c] = null;
+          cellSpecial[r][c] = null;
+          return true;
+        });
+      }
+      if (levelConfig.iceCount > 0) {
+        place(levelConfig.iceCount, (r, c) => {
+          if (grid[r][c] >= 0 && cellMeta[r][c] === null && !cellSpecial[r][c]) {
+            cellMeta[r][c] = "ice";
+            return true;
+          }
+          return false;
+        });
+      }
+      if (levelConfig.lockCount > 0) {
+        place(levelConfig.lockCount, (r, c) => {
+          if (grid[r][c] >= 0 && cellMeta[r][c] === null && !cellSpecial[r][c]) {
+            cellMeta[r][c] = "lock";
+            return true;
+          }
+          return false;
+        });
+      }
+    }
+
+    function createGrid() {
+      grid = [];
+      initCellMeta();
+      for (let r = 0; r < SIZE; r++) {
+        grid[r] = [];
+        for (let c = 0; c < SIZE; c++) {
+          let t;
+          do {
+            t = randType();
+          } while (wouldMatchAt(r, c, t));
+          grid[r][c] = t;
+        }
+      }
+      spawnObstacles();
+    }
+
+    function wouldMatchAt(r, c, t) {
+      if (t < 0) return false;
+      if (c >= 2 && matchTypeAt(r, c - 1) === t && matchTypeAt(r, c - 2) === t) return true;
+      if (r >= 2 && matchTypeAt(r - 1, c) === t && matchTypeAt(r - 2, c) === t) return true;
+      return false;
+    }
+
+    function findMatches() {
+      const set = new Set();
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE - 2; c++) {
+          const t = matchTypeAt(r, c);
+          if (t < 0) continue;
+          if (matchTypeAt(r, c + 1) === t && matchTypeAt(r, c + 2) === t) {
+            let k = c;
+            while (k < SIZE && matchTypeAt(r, k) === t) {
+              set.add(`${r},${k}`);
+              k++;
+            }
+          }
+        }
+      }
+      for (let c = 0; c < SIZE; c++) {
+        for (let r = 0; r < SIZE - 2; r++) {
+          const t = matchTypeAt(r, c);
+          if (t < 0) continue;
+          if (matchTypeAt(r + 1, c) === t && matchTypeAt(r + 2, c) === t) {
+            let k = r;
+            while (k < SIZE && matchTypeAt(k, c) === t) {
+              set.add(`${k},${c}`);
+              k++;
+            }
+          }
+        }
+      }
+      return set;
+    }
+
+    function getAdjacentKeys(r, c) {
+      const keys = [];
+      [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dr, dc]) => {
+        const nr = r + dr, nc = c + dc;
+        if (inBounds(nr, nc)) keys.push(`${nr},${nc}`);
+      });
+      return keys;
+    }
+
+    function resolveObstaclesFromMatch(matches) {
+      const touched = new Set();
+      matches.forEach((key) => {
+        const [r, c] = key.split(",").map(Number);
+        getAdjacentKeys(r, c).forEach((k) => touched.add(k));
+      });
+      let cracked = 0;
+      touched.forEach((key) => {
+        const [r, c] = key.split(",").map(Number);
+        if (grid[r][c] === STONE) {
+          grid[r][c] = -1;
+          cracked++;
+          return;
+        }
+        if (cellMeta[r][c] === "ice") {
+          cellMeta[r][c] = null;
+          cracked++;
+        } else if (cellMeta[r][c] === "lock") {
+          cellMeta[r][c] = null;
+          cracked++;
+        }
+      });
+      return cracked;
+    }
+
+    function grantBonusMoves(clearScore) {
+      const th = levelConfig.bonusThreshold;
+      if (clearScore < th) return 0;
+      let bonus = 1;
+      if (clearScore >= th * 2.2) bonus = 3;
+      else if (clearScore >= th * 1.45) bonus = 2;
+      if (levelConfig.phase >= 4 && bonus < 3 && clearScore >= th * 1.2) bonus += 1;
+      bonus = Math.min(4, bonus);
+      movesLeft += bonus;
+      showToast(`精彩消除 ${clearScore} 分！奖励 +${bonus} 步`);
+      return bonus;
+    }
+
+    function isAdjacent(r1, c1, r2, c2) {
+      return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
+    }
+
+    function swap(r1, c1, r2, c2) {
+      const tmp = grid[r1][c1];
+      grid[r1][c1] = grid[r2][c2];
+      grid[r2][c2] = tmp;
+    }
+
+    function applyGravity() {
+      for (let c = 0; c < SIZE; c++) {
+        const stonesAt = new Set();
+        const candies = [];
+        for (let r = SIZE - 1; r >= 0; r--) {
+          if (grid[r][c] === STONE) stonesAt.add(r);
+          else if (grid[r][c] >= 0) {
+            candies.push({
+              t: grid[r][c],
+              m: cellMeta[r][c],
+              s: cellSpecial[r][c]
+            });
+          }
+        }
+        for (let r = 0; r < SIZE; r++) {
+          if (!stonesAt.has(r)) {
+            grid[r][c] = -1;
+            cellMeta[r][c] = null;
+            cellSpecial[r][c] = null;
+          }
+        }
+        let ci = 0;
+        for (let r = SIZE - 1; r >= 0; r--) {
+          if (stonesAt.has(r)) continue;
+          if (ci < candies.length) {
+            grid[r][c] = candies[ci].t;
+            cellMeta[r][c] = candies[ci].m;
+            cellSpecial[r][c] = candies[ci].s;
+            ci++;
+          } else {
+            grid[r][c] = randType();
+            cellMeta[r][c] = null;
+            cellSpecial[r][c] = null;
+          }
+        }
+      }
+    }
+
+    function render(matchSet) {
+      boardEl.innerHTML = "";
+      const badgeIcon = { lineH: "↔️", lineV: "↕️", bomb: "💥", durian: "🥭" };
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          const key = `${r},${c}`;
+          const t = grid[r][c];
+          if (matchSet && matchSet.has(key)) cell.classList.add("matching");
+          if (dragStart && dragStart.r === r && dragStart.c === c) {
+            cell.classList.add("selected", "dragging");
+          }
+          if (t === STONE) {
+            cell.classList.add("stone");
+            cell.textContent = "🪨";
+          } else if (t >= 0) {
+            cell.style.background = COLORS[t];
+            const inner = document.createElement("span");
+            inner.className = "fruit-inner";
+            inner.textContent = ICONS[t];
+            cell.appendChild(inner);
+            const sp = cellSpecial[r][c];
+            if (sp) {
+              cell.classList.add("sp-" + sp);
+              const badge = document.createElement("div");
+              badge.className = "special-badge";
+              badge.textContent = badgeIcon[sp] || "✨";
+              cell.appendChild(badge);
+            }
+            if (cellMeta[r][c] === "ice") {
+              cell.classList.add("ice");
+              const cover = document.createElement("div");
+              cover.className = "ice-cover";
+              cover.textContent = "🧊";
+              cell.appendChild(cover);
+            }
+            if (cellMeta[r][c] === "lock") cell.classList.add("locked");
+          }
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 1800);
+    }
+
+    function updateUI() {
+      scoreEl.textContent = score;
+      comboEl.textContent = combo;
+      movesEl.textContent = movesLeft;
+      scoreGoalEl.textContent = score;
+      const pct = Math.min(100, (score / levelConfig.target) * 100);
+      progressBarEl.style.width = pct + "%";
+      progressBarEl.classList.toggle("done", score >= levelConfig.target);
+    }
+
+    function updateLevelPanel() {
+      const m = levelConfig.mechanic;
+      levelNumEl.textContent = levelConfig.level;
+      targetEl.textContent = levelConfig.target;
+      typesHintEl.textContent = levelConfig.types;
+      levelTagEl.textContent = levelConfig.tag;
+      levelTagEl.className = "level-tag" + (levelConfig.tagClass ? " " + levelConfig.tagClass : "");
+      bonusThresholdEl.textContent = levelConfig.bonusThreshold;
+      mechanicBannerEl.className = "mechanic-banner" + (levelConfig.phase > 0 ? " phase-" + levelConfig.phase : "");
+      mechanicBannerEl.innerHTML =
+        `<strong>${m.icon} ${m.name}</strong> · ${m.tip}`;
+    }
+
+    function announceNewPhase() {
+      if (levelConfig.phase === 0 || levelConfig.phaseLevel !== 1) return;
+      if (levelConfig.phase === lastAnnouncedPhase) return;
+      lastAnnouncedPhase = levelConfig.phase;
+      const m = levelConfig.mechanic;
+      setTimeout(() => showToast(`${m.icon} 新章节开启：${m.name}`), 400);
+    }
+
+    function showModal(won) {
+      modalEl.classList.toggle("fail", !won);
+      if (won) {
+        modalTitleEl.textContent = "过关！";
+        const nextCfg = getLevelConfig(levelConfig.level + 1);
+        const newMech = nextCfg.phase > levelConfig.phase
+          ? `\n下一章将开启「${nextCfg.mechanic.name}」！` : "";
+        modalMsgEl.textContent =
+          `第 ${levelConfig.level} 关完成！得分 ${score} / ${levelConfig.target}。${newMech}`;
+        modalPrimaryEl.textContent = "下一关";
+        modalPrimaryEl.style.display = "";
+        modalSecondaryEl.textContent = "再玩一次";
+      } else {
+        modalTitleEl.textContent = "未达标";
+        modalMsgEl.textContent =
+          `还差 ${levelConfig.target - score} 分。本关目标 ${levelConfig.target} 分，剩余步数已用完。`;
+        modalPrimaryEl.textContent = "重试本关";
+        modalPrimaryEl.style.display = "";
+        modalSecondaryEl.style.display = "none";
+      }
+      overlayEl.classList.add("show");
+    }
+
+    function hideModal() {
+      overlayEl.classList.remove("show");
+      modalSecondaryEl.style.display = "";
+    }
+
+    function checkLevelEnd() {
+      if (gameOver) return true;
+      if (score >= levelConfig.target) {
+        gameOver = true;
+        busy = true;
+        saveProgress(currentLevel + 1);
+        showModal(true);
+        return true;
+      }
+      if (movesLeft <= 0) {
+        gameOver = true;
+        busy = true;
+        showModal(false);
+        return true;
+      }
+      return false;
+    }
+
+    async function resolveMatches(isChain) {
+      const matches = findMatches();
+      if (matches.size === 0) {
+        combo = 0;
+        updateUI();
+        busy = false;
+        checkLevelEnd();
+        return;
+      }
+
+      const spawns = getSpawnsFromMatches(matches);
+      const spawnKeys = new Set(spawns.map((s) => `${s.r},${s.c}`));
+      const toActivate = new Set();
+      matches.forEach((key) => {
+        const [r, c] = key.split(",").map(Number);
+        if (cellSpecial[r][c] && !spawnKeys.has(key)) toActivate.add(key);
+      });
+
+      resolveObstaclesFromMatch(matches);
+      render(matches);
+      await sleep(380);
+
+      if (!isChain) combo = 0;
+      const cleared = Math.max(0, matches.size - spawnKeys.size);
+      if (cleared > 0) addClearScore(cleared);
+
+      spawns.forEach(({ r, c, sp }) => {
+        setSpecial(r, c, sp);
+        const msgs = { lineH: "获得 ↔ 直线特效", lineV: "获得 ↕ 直线特效", bomb: "获得 💥 爆炸特效", durian: "获得 🥭 魔力榴莲" };
+        if (!isChain && spawns.length === 1) showToast(msgs[sp]);
+      });
+
+      matches.forEach((key) => {
+        if (spawnKeys.has(key)) return;
+        const [r, c] = key.split(",").map(Number);
+        clearCell(r, c);
+      });
+
+      for (const key of toActivate) {
+        const [r, c] = key.split(",").map(Number);
+        const sp = cellSpecial[r][c];
+        if (!sp) continue;
+        cellSpecial[r][c] = null;
+        if (await activateSpecialAt(r, c, sp)) return;
+      }
+
+      applyGravity();
+      render();
+      await sleep(200);
+      if (checkLevelEnd()) return;
+      await resolveMatches(true);
+    }
+
+    function sleep(ms) {
+      return new Promise((res) => setTimeout(res, ms));
+    }
+
+    function canStartDrag(r, c) {
+      if (!isPlayable(r, c)) return false;
+      if (cellMeta[r][c] === "lock" || cellMeta[r][c] === "ice") return false;
+      return true;
+    }
+
+    function canSwapCells(r1, c1, r2, c2) {
+      if (!canStartDrag(r1, c1) || !canStartDrag(r2, c2)) return false;
+      return true;
+    }
+
+    async function trySwap(r1, c1, r2, c2) {
+      if (!canSwapCells(r1, c1, r2, c2)) {
+        busy = false;
+        return false;
+      }
+      busy = true;
+      lastSwap = { r1, c1, r2, c2 };
+      const snap = {
+        g1: grid[r1][c1], g2: grid[r2][c2],
+        m1: cellMeta[r1][c1], m2: cellMeta[r2][c2],
+        s1: cellSpecial[r1][c1], s2: cellSpecial[r2][c2]
+      };
+      swapAll(r1, c1, r2, c2);
+      render();
+
+      const sp1 = cellSpecial[r1][c1];
+      const sp2 = cellSpecial[r2][c2];
+
+      if (sp1 && sp2) {
+        movesLeft--;
+        updateUI();
+        combo = 0;
+        await activateCombo(sp1, sp2, r1, c1, r2, c2);
+        if (!gameOver) await resolveMatches(false);
+        busy = false;
+        checkLevelEnd();
+        return true;
+      }
+
+      if (sp1 || sp2) {
+        movesLeft--;
+        updateUI();
+        combo = 0;
+        const sr = sp1 ? r1 : r2;
+        const sc = sp1 ? c1 : c2;
+        const s = sp1 || sp2;
+        cellSpecial[sr][sc] = null;
+        if (await activateSpecialAt(sr, sc, s)) {
+          busy = false;
+          return true;
+        }
+        if (!gameOver) await resolveMatches(false);
+        busy = false;
+        checkLevelEnd();
+        return true;
+      }
+
+      const matches = findMatches();
+      if (matches.size === 0) {
+        await sleep(150);
+        grid[r1][c1] = snap.g1;
+        grid[r2][c2] = snap.g2;
+        cellMeta[r1][c1] = snap.m1;
+        cellMeta[r2][c2] = snap.m2;
+        cellSpecial[r1][c1] = snap.s1;
+        cellSpecial[r2][c2] = snap.s2;
+        render();
+        busy = false;
+        lastSwap = null;
+        return false;
+      }
+
+      movesLeft--;
+      updateUI();
+      await resolveMatches(false);
+      busy = false;
+      return true;
+    }
+
+    function getDragDirection(dx, dy) {
+      const th = getDragThreshold();
+      if (Math.abs(dx) < th && Math.abs(dy) < th) return null;
+      if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "right" : "left";
+      return dy > 0 ? "down" : "up";
+    }
+
+    function getNeighbor(r, c, dir) {
+      const delta = { left: [0, -1], right: [0, 1], up: [-1, 0], down: [1, 0] };
+      const [dr, dc] = delta[dir];
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE) return null;
+      return { r: nr, c: nc };
+    }
+
+    function clearDrag() {
+      dragStart = null;
+      dragLocked = false;
+    }
+
+    function cellFromPoint(x, y) {
+      const el = document.elementFromPoint(x, y);
+      return el ? el.closest(".cell") : null;
+    }
+
+    async function commitDrag(dir) {
+      if (!dragStart || dragLocked) return;
+      const { r, c } = dragStart;
+      const neighbor = getNeighbor(r, c, dir);
+      dragLocked = true;
+      clearDrag();
+      if (!neighbor) {
+        render();
+        return;
+      }
+      await trySwap(r, c, neighbor.r, neighbor.c);
+    }
+
+    function handleDragMove(clientX, clientY) {
+      if (!dragStart || dragLocked) return;
+      const dir = getDragDirection(clientX - dragStart.x, clientY - dragStart.y);
+      if (!dir) return;
+      commitDrag(dir);
+    }
+
+    function beginDrag(r, c, clientX, clientY, noRender) {
+      if (busy || gameOver || movesLeft <= 0) return false;
+      if (!canStartDrag(r, c)) return false;
+      ensureAudio();
+      dragStart = { r, c, x: clientX, y: clientY };
+      dragLocked = false;
+      if (!noRender) render();
+      return true;
+    }
+
+    async function ensureAudio() {
+      if (Bgm.isEnabled() && !busy) await Bgm.start();
+      if (Sfx.isEnabled()) await Bgm.ensureCtx();
+    }
+
+    function setupBoardDrag() {
+      let activeTouchId = null;
+      let usingTouch = false;
+
+      boardEl.addEventListener("touchstart", (e) => {
+        if (e.touches.length > 1) return;
+        const touch = e.changedTouches[0];
+        const cell = cellFromPoint(touch.clientX, touch.clientY);
+        if (!cell || cell.classList.contains("stone")) return;
+        const r = +cell.dataset.r, c = +cell.dataset.c;
+        if (!beginDrag(r, c, touch.clientX, touch.clientY, true)) return;
+        usingTouch = true;
+        activeTouchId = touch.identifier;
+        e.preventDefault();
+      }, { passive: false });
+
+      boardEl.addEventListener("touchmove", (e) => {
+        if (!dragStart || !usingTouch) return;
+        e.preventDefault();
+        const touch = Array.from(e.touches).find((t) => t.identifier === activeTouchId)
+          || Array.from(e.changedTouches).find((t) => t.identifier === activeTouchId);
+        if (!touch) return;
+        handleDragMove(touch.clientX, touch.clientY);
+      }, { passive: false });
+
+      const endTouch = (e) => {
+        const ended = Array.from(e.changedTouches).some((t) => t.identifier === activeTouchId);
+        if (!ended && e.type !== "touchcancel") return;
+        usingTouch = false;
+        activeTouchId = null;
+        if (dragStart) {
+          clearDrag();
+          render();
+        }
+      };
+
+      boardEl.addEventListener("touchend", endTouch, { passive: true });
+      boardEl.addEventListener("touchcancel", endTouch, { passive: true });
+
+      boardEl.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "touch" || usingTouch) return;
+        const cell = e.target.closest(".cell");
+        if (!cell || cell.classList.contains("stone")) return;
+        const r = +cell.dataset.r, c = +cell.dataset.c;
+        if (!beginDrag(r, c, e.clientX, e.clientY)) return;
+        e.preventDefault();
+        try {
+          boardEl.setPointerCapture(e.pointerId);
+          dragStart.pointerId = e.pointerId;
+        } catch (_) {}
+      });
+
+      boardEl.addEventListener("pointermove", (e) => {
+        if (!dragStart || e.pointerType === "touch" || usingTouch) return;
+        if (dragStart.pointerId != null && dragStart.pointerId !== e.pointerId) return;
+        handleDragMove(e.clientX, e.clientY);
+      });
+
+      const endPointer = (e) => {
+        if (e.pointerType === "touch" || usingTouch) return;
+        if (!dragStart) return;
+        if (dragStart.pointerId != null && dragStart.pointerId !== e.pointerId) return;
+        try {
+          boardEl.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+        clearDrag();
+        render();
+      };
+
+      boardEl.addEventListener("pointerup", endPointer);
+      boardEl.addEventListener("pointercancel", endPointer);
+    }
+
+    function trySwapDry(r1, c1, r2, c2) {
+      if (!canSwapCells(r1, c1, r2, c2)) return false;
+      if (cellSpecial[r1][c1] || cellSpecial[r2][c2]) return true;
+      swapAll(r1, c1, r2, c2);
+      const ok = findMatches().size > 0;
+      swapAll(r1, c1, r2, c2);
+      return ok;
+    }
+
+    function hasPossibleMove() {
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (c < SIZE - 1 && trySwapDry(r, c, r, c + 1)) return true;
+          if (r < SIZE - 1 && trySwapDry(r, c, r + 1, c)) return true;
+        }
+      }
+      return false;
+    }
+
+    function shuffle() {
+      const items = [];
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (grid[r][c] >= 0) {
+            items.push({ t: grid[r][c], m: cellMeta[r][c], s: cellSpecial[r][c] });
+          }
+        }
+      }
+      do {
+        for (let i = items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [items[i], items[j]] = [items[j], items[i]];
+        }
+        let idx = 0;
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (grid[r][c] === STONE) continue;
+            grid[r][c] = items[idx].t;
+            cellMeta[r][c] = items[idx].m;
+            cellSpecial[r][c] = items[idx].s;
+            idx++;
+          }
+        }
+      } while (findMatches().size > 0 || !hasPossibleMove());
+    }
+
+    function startLevel(level) {
+      hideModal();
+      currentLevel = level;
+      levelConfig = getLevelConfig(level);
+      typesCount = levelConfig.types;
+      score = 0;
+      combo = 0;
+      movesLeft = levelConfig.moves;
+      dragStart = null;
+      busy = false;
+      gameOver = false;
+      updateLevelPanel();
+      createGrid();
+      while (findMatches().size > 0 || !hasPossibleMove()) shuffle();
+      updateUI();
+      render();
+      announceNewPhase();
+    }
+
+    document.getElementById("restart").addEventListener("click", () => {
+      if (Bgm.isEnabled()) Bgm.start();
+      startLevel(currentLevel);
+    });
+
+    modalPrimaryEl.addEventListener("click", () => {
+      hideModal();
+      if (modalEl.classList.contains("fail")) {
+        startLevel(currentLevel);
+      } else {
+        startLevel(currentLevel + 1);
+      }
+    });
+
+    modalSecondaryEl.addEventListener("click", () => {
+      hideModal();
+      startLevel(currentLevel);
+    });
+
+    setupBoardDrag();
+    startLevel(loadSavedLevel());
+  </script>
+</body>
+</html>
